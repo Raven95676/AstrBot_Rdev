@@ -42,12 +42,12 @@ class AstrBotDashboard:
         core_lifecycle: AstrBotCoreLifecycle,
         db: BaseDatabase,
         shutdown_event: asyncio.Event,
-        webui_dir: str | None = None,
     ) -> None:
         self.core_lifecycle = core_lifecycle
         self.config = core_lifecycle.astrbot_config
 
-        # 参数指定webui目录
+        # 通过环境变量指定webui目录
+        webui_dir = os.environ.get("ASTRBOT_WEBUI_DIR")
         if webui_dir and os.path.exists(webui_dir):
             self.data_path = os.path.abspath(webui_dir)
         else:
@@ -201,12 +201,16 @@ class AstrBotDashboard:
 
     def run(self):
         ip_addr = []
-        if p := os.environ.get("DASHBOARD_PORT"):
+        if p := os.environ.get("ASTRBOT_DASHBOARD_PORT"):
             port = p
         else:
             port = self.core_lifecycle.astrbot_config["dashboard"].get("port", 6185)
-        host = self.core_lifecycle.astrbot_config["dashboard"].get("host", "0.0.0.0")
-        enable = self.core_lifecycle.astrbot_config["dashboard"].get("enable", True)
+        if os.environ.get("ASTRBOT_LAUNCHER") == "1":
+            host = "127.0.0.1"
+            enable = True
+        else:
+            host = self.core_lifecycle.astrbot_config["dashboard"].get("host", "0.0.0.0")
+            enable = self.core_lifecycle.astrbot_config["dashboard"].get("enable", True)
 
         if not enable:
             logger.info("WebUI 已被禁用")

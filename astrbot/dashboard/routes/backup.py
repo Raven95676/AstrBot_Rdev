@@ -15,7 +15,7 @@ from pathlib import Path
 import jwt
 from quart import request, send_file
 
-from astrbot.core import logger
+from astrbot.core import ASTRBOT_LAUNCHER, logger
 from astrbot.core.backup.exporter import AstrBotExporter
 from astrbot.core.backup.importer import AstrBotImporter
 from astrbot.core.core_lifecycle import AstrBotCoreLifecycle
@@ -123,6 +123,18 @@ class BackupRoute(Route):
             "/backup/rename": ("POST", self.rename_backup),  # 重命名备份
         }
         self.register_routes()
+
+    @staticmethod
+    def _launcher_export_disabled_response() -> dict:
+        return (
+            Response().error("Data backup export is disabled in launcher mode").__dict__
+        )
+
+    @staticmethod
+    def _launcher_import_disabled_response() -> dict:
+        return (
+            Response().error("Data backup import is disabled in launcher mode").__dict__
+        )
 
     def _init_task(self, task_id: str, task_type: str, status: str = "pending") -> None:
         """初始化任务状态"""
@@ -348,6 +360,9 @@ class BackupRoute(Route):
         返回:
         - task_id: 任务ID，用于查询导出进度
         """
+        if ASTRBOT_LAUNCHER:
+            return self._launcher_export_disabled_response()
+
         try:
             # 生成任务ID
             task_id = str(uuid.uuid4())
@@ -423,6 +438,9 @@ class BackupRoute(Route):
         返回:
         - filename: 保存的文件名
         """
+        if ASTRBOT_LAUNCHER:
+            return self._launcher_import_disabled_response()
+
         try:
             files = await request.files
             if "file" not in files:
@@ -475,6 +493,9 @@ class BackupRoute(Route):
         - chunk_size: 分片大小（由后端决定）
         - total_chunks: 分片总数（由后端根据 total_size 和 chunk_size 计算）
         """
+        if ASTRBOT_LAUNCHER:
+            return self._launcher_import_disabled_response()
+
         try:
             data = await request.json
             filename = data.get("filename")
@@ -554,6 +575,9 @@ class BackupRoute(Route):
         - received: 已接收的分片数量
         - total: 分片总数
         """
+        if ASTRBOT_LAUNCHER:
+            return self._launcher_import_disabled_response()
+
         try:
             form = await request.form
             files = await request.files
@@ -656,6 +680,9 @@ class BackupRoute(Route):
         - filename: 合并后的文件名
         - size: 文件大小
         """
+        if ASTRBOT_LAUNCHER:
+            return self._launcher_import_disabled_response()
+
         try:
             data = await request.json
             upload_id = data.get("upload_id")
@@ -742,6 +769,9 @@ class BackupRoute(Route):
         JSON Body:
         - upload_id: 上传会话 ID
         """
+        if ASTRBOT_LAUNCHER:
+            return self._launcher_import_disabled_response()
+
         try:
             data = await request.json
             upload_id = data.get("upload_id")
@@ -776,6 +806,9 @@ class BackupRoute(Route):
         返回:
         - ImportPreCheckResult: 预检查结果
         """
+        if ASTRBOT_LAUNCHER:
+            return self._launcher_import_disabled_response()
+
         try:
             data = await request.json
             filename = data.get("filename")
@@ -821,6 +854,9 @@ class BackupRoute(Route):
         返回:
         - task_id: 任务ID，用于查询导入进度
         """
+        if ASTRBOT_LAUNCHER:
+            return self._launcher_import_disabled_response()
+
         try:
             data = await request.json
             filename = data.get("filename")
@@ -961,6 +997,9 @@ class BackupRoute(Route):
         注意: 此路由已被添加到 auth_middleware 白名单中，
               使用 URL 参数中的 token 进行鉴权，以支持浏览器原生下载。
         """
+        if ASTRBOT_LAUNCHER:
+            return self._launcher_export_disabled_response()
+
         try:
             filename = request.args.get("filename")
             token = request.args.get("token")

@@ -15,7 +15,11 @@ async def run_astrbot(astrbot_root: Path) -> None:
     from astrbot.core import LogBroker, LogManager, db_helper, logger
     from astrbot.core.initial_loader import InitialLoader
 
-    await check_dashboard(astrbot_root / "data")
+    webui_dir = os.environ.get("ASTRBOT_WEBUI_DIR")
+    if webui_dir and os.path.exists(webui_dir):
+        logger.info(f"使用环境变量指定的 WebUI 目录: {webui_dir}")
+    else:
+        await check_dashboard(astrbot_root / "data")
 
     log_broker = LogBroker()
     LogManager.set_queue_handler(logger, log_broker)
@@ -33,6 +37,7 @@ def run(reload: bool, port: str) -> None:
     """运行 AstrBot"""
     try:
         os.environ["ASTRBOT_CLI"] = "1"
+        os.environ["ASTRBOT_DISABLE_UPDATE"] = "1"
         astrbot_root = get_astrbot_root()
 
         if not check_astrbot_root(astrbot_root):
@@ -44,7 +49,7 @@ def run(reload: bool, port: str) -> None:
         sys.path.insert(0, str(astrbot_root))
 
         if port:
-            os.environ["DASHBOARD_PORT"] = port
+            os.environ["ASTRBOT_DASHBOARD_PORT"] = port
 
         if reload:
             click.echo("启用插件自动重载")

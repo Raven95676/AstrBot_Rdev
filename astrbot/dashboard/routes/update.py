@@ -2,7 +2,7 @@ import traceback
 
 from quart import request
 
-from astrbot.core import DEMO_MODE, logger, pip_installer
+from astrbot.core import ASTRBOT_LAUNCHER, DEMO_MODE, logger, pip_installer
 from astrbot.core.config.default import VERSION
 from astrbot.core.core_lifecycle import AstrBotCoreLifecycle
 from astrbot.core.db.migration.helper import check_migration_needed_v4, do_migration_v4
@@ -52,6 +52,21 @@ class UpdateRoute(Route):
             return Response().error(f"迁移失败: {e!s}").__dict__
 
     async def check_update(self):
+        if ASTRBOT_LAUNCHER:
+            return (
+                Response()
+                .ok(
+                    {
+                        "version": f"v{VERSION}",
+                        "has_new_version": False,
+                        "dashboard_version": await get_dashboard_version(),
+                        "dashboard_has_new_version": False,
+                    },
+                    "Launcher 模式下不检查更新。",
+                )
+                .__dict__
+            )
+
         type_ = request.args.get("type", None)
 
         try:
@@ -86,6 +101,9 @@ class UpdateRoute(Route):
             return Response().error(e.__str__()).__dict__
 
     async def update_project(self):
+        if ASTRBOT_LAUNCHER:
+            return Response().error("Launcher 模式下不支持更新").__dict__
+
         data = await request.json
         version = data.get("version", "")
         reboot = data.get("reboot", True)
@@ -137,6 +155,9 @@ class UpdateRoute(Route):
             return Response().error(e.__str__()).__dict__
 
     async def update_dashboard(self):
+        if ASTRBOT_LAUNCHER:
+            return Response().error("Launcher 模式下不支持更新 WebUI").__dict__
+
         try:
             try:
                 await download_dashboard(version=f"v{VERSION}", latest=False)

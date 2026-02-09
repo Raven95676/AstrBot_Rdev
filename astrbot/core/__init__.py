@@ -15,6 +15,7 @@ from .utils.astrbot_path import get_astrbot_data_path
 os.makedirs(get_astrbot_data_path(), exist_ok=True)
 
 DEMO_MODE = os.getenv("DEMO_MODE", False)
+ASTRBOT_LAUNCHER = os.environ.get("ASTRBOT_LAUNCHER") == "1"
 
 astrbot_config = AstrBotConfig()
 t2i_base_url = astrbot_config.get("t2i_endpoint", "https://t2i.soulter.top/text2img")

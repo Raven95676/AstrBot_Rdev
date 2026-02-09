@@ -1,4 +1,3 @@
-import argparse
 import asyncio
 import mimetypes
 import os
@@ -56,9 +55,10 @@ def check_env() -> None:
     mimetypes.add_type("application/json", ".json")
 
 
-async def check_dashboard_files(webui_dir: str | None = None):
+async def check_dashboard_files():
     """下载管理面板文件"""
-    # 指定webui目录
+    # 环境变量指定webui目录
+    webui_dir = os.environ.get("ASTRBOT_WEBUI_DIR")
     if webui_dir:
         if os.path.exists(webui_dir):
             logger.info(f"使用指定的 WebUI 目录: {webui_dir}")
@@ -93,15 +93,6 @@ async def check_dashboard_files(webui_dir: str | None = None):
 
 
 if __name__ == "__main__":
-    parser = argparse.ArgumentParser(description="AstrBot")
-    parser.add_argument(
-        "--webui-dir",
-        type=str,
-        help="指定 WebUI 静态文件目录路径",
-        default=None,
-    )
-    args = parser.parse_args()
-
     check_env()
 
     # 启动日志代理
@@ -109,7 +100,7 @@ if __name__ == "__main__":
     LogManager.set_queue_handler(logger, log_broker)
 
     # 检查仪表板文件
-    webui_dir = asyncio.run(check_dashboard_files(args.webui_dir))
+    asyncio.run(check_dashboard_files())
 
     db = db_helper
 
@@ -117,5 +108,4 @@ if __name__ == "__main__":
     logger.info(logo_tmpl)
 
     core_lifecycle = InitialLoader(db, log_broker)
-    core_lifecycle.webui_dir = webui_dir
     asyncio.run(core_lifecycle.start())

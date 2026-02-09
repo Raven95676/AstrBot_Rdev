@@ -9,7 +9,7 @@ import aiohttp
 import psutil
 from quart import request
 
-from astrbot.core import DEMO_MODE, logger
+from astrbot.core import ASTRBOT_LAUNCHER, DEMO_MODE, logger
 from astrbot.core.config import VERSION
 from astrbot.core.core_lifecycle import AstrBotCoreLifecycle
 from astrbot.core.db import BaseDatabase
@@ -50,6 +50,9 @@ class StatRoute(Route):
                 .__dict__
             )
 
+        if ASTRBOT_LAUNCHER:
+            return Response().error("Launcher 模式下不支持重启").__dict__
+
         await self.core_lifecycle.restart()
         return Response().ok().__dict__
 
@@ -79,6 +82,7 @@ class StatRoute(Route):
                     "dashboard_version": await get_dashboard_version(),
                     "change_pwd_hint": self.is_default_cred(),
                     "need_migration": need_migration,
+                    "launcher_mode": ASTRBOT_LAUNCHER,
                 },
             )
             .__dict__

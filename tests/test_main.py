@@ -77,14 +77,15 @@ async def test_check_dashboard_files_exists_but_version_mismatch(monkeypatch):
 
 
 @pytest.mark.asyncio
-async def test_check_dashboard_files_with_webui_dir_arg(monkeypatch):
-    """Tests that providing a valid webui_dir skips all checks."""
+async def test_check_dashboard_files_with_webui_dir_env(monkeypatch):
+    """Tests that setting ASTRBOT_WEBUI_DIR env var skips all checks."""
     valid_dir = "/tmp/my-custom-webui"
+    monkeypatch.setenv("ASTRBOT_WEBUI_DIR", valid_dir)
     monkeypatch.setattr(os.path, "exists", lambda path: path == valid_dir)
 
     with mock.patch("main.download_dashboard") as mock_download:
         with mock.patch("main.get_dashboard_version") as mock_get_version:
-            result = await check_dashboard_files(webui_dir=valid_dir)
+            result = await check_dashboard_files()
             assert result == valid_dir
             mock_download.assert_not_called()
             mock_get_version.assert_not_called()

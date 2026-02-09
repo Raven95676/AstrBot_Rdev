@@ -45,6 +45,7 @@ let version = ref('');
 let releases = ref([]);
 let updatingDashboardLoading = ref(false);
 let installLoading = ref(false);
+const launcherMode = ref(false);
 const isElectronApp = ref(false);
 const redirectConfirmDialog = ref(false);
 const pendingRedirectUrl = ref('');
@@ -209,6 +210,10 @@ function getVersion() {
     .then((res) => {
       botCurrVersion.value = "v" + res.data.data.version;
       dashboardCurrentVersion.value = res.data.data?.dashboard_version;
+      launcherMode.value = !!res.data.data?.launcher_mode;
+      if (!launcherMode.value) {
+        checkUpdate();
+      }
       let change_pwd_hint = res.data.data?.change_pwd_hint;
       if (change_pwd_hint) {
         dialog.value = true;
@@ -328,7 +333,6 @@ function handleLogoClick() {
 }
 
 getVersion();
-checkUpdate();
 
 const commonStore = useCommonStore();
 commonStore.createEventSource(); // log
@@ -422,7 +426,7 @@ onMounted(async () => {
   <v-spacer />
 
     <!-- 版本提示信息 - 在手机上隐藏 -->
-    <div class="mr-4 hidden-xs">
+    <div class="mr-4 hidden-xs" v-if="!launcherMode">
       <small v-if="hasNewVersion">
         {{ t('core.header.version.hasNewVersion') }}
       </small>
@@ -501,6 +505,7 @@ onMounted(async () => {
 
       <!-- 更新按钮 -->
       <v-list-item
+        v-if="!launcherMode"
         @click="handleUpdateClick"
         class="styled-menu-item"
         rounded="md"

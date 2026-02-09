@@ -52,14 +52,14 @@
 
             <v-list-subheader>{{ tm('system.title') }}</v-list-subheader>
 
-            <v-list-item :subtitle="tm('system.backup.subtitle')" :title="tm('system.backup.title')">
+            <v-list-item v-if="!launcherMode" :subtitle="tm('system.backup.subtitle')" :title="tm('system.backup.title')">
                 <v-btn style="margin-top: 16px;" color="primary" @click="openBackupDialog">
                     <v-icon class="mr-2">mdi-backup-restore</v-icon>
                     {{ tm('system.backup.button') }}
                 </v-btn>
             </v-list-item>
 
-            <v-list-item :subtitle="tm('system.restart.subtitle')" :title="tm('system.restart.title')">
+            <v-list-item v-if="!launcherMode" :subtitle="tm('system.restart.subtitle')" :title="tm('system.restart.title')">
                 <v-btn style="margin-top: 16px;" color="error" @click="restartAstrBot">{{ tm('system.restart.button') }}</v-btn>
             </v-list-item>
 
@@ -72,12 +72,12 @@
 
     <WaitingForRestart ref="wfr"></WaitingForRestart>
     <MigrationDialog ref="migrationDialog"></MigrationDialog>
-    <BackupDialog ref="backupDialog"></BackupDialog>
+    <BackupDialog v-if="!launcherMode" ref="backupDialog"></BackupDialog>
 
 </template>
 
 <script setup>
-import { ref, watch } from 'vue';
+import { ref, watch, onMounted } from 'vue';
 import axios from 'axios';
 import WaitingForRestart from '@/components/shared/WaitingForRestart.vue';
 import ProxySelector from '@/components/shared/ProxySelector.vue';
@@ -135,6 +135,13 @@ watch(secondaryColor, (value) => {
 const wfr = ref(null);
 const migrationDialog = ref(null);
 const backupDialog = ref(null);
+const launcherMode = ref(false);
+
+onMounted(() => {
+    axios.get('/api/stat/version').then((res) => {
+        launcherMode.value = !!res.data.data?.launcher_mode;
+    });
+});
 
 const restartAstrBot = () => {
     axios.post('/api/stat/restart-core').then(() => {
